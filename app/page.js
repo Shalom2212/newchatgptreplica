@@ -137,7 +137,7 @@ export default function TestPage() {
   }, [userfullinput]);
 
   const responselist = data.map((item) => (
-    <div>
+    <div key={item.message_data.user}>
       <div className="m-5 pb-5">
         <div className="flex m-4 my-0">
           <Image
