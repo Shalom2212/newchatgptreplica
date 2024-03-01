@@ -14,3 +14,8 @@ export const sidebaraddress = atom({
   key: "sidebaraddress",
   default: "",
 });
+
+export const sidebarloading = atom({
+  key: "sidebarloading",
+  default: true,
+});

@@ -4,12 +4,19 @@ import Image from "next/image";
 import chatgpticongradient from "@/assets/chatgptgradient.svg";
 import shareicon from "@/assets/shareicon.png";
 import chatloading from "@/assets/chatloading.svg";
+import Sidebar from "@/components/ui/sidebar";
 import sendicon from "@/assets/send.png";
 import { useEffect, useState } from "react";
 import { useRecoilState, useRecoilValue } from "recoil";
-import { responsehistory, sidebardata, sidebaraddress } from "@/States/atoms";
+import {
+  responsehistory,
+  sidebardata,
+  sidebaraddress,
+  sidebarloading,
+} from "@/States/atoms";
 import ReactMarkdown from "react-markdown";
 import axios from "axios";
+import { supabase } from "@/connections/supabase";
 
 export default function TestPage() {
   const [data, setData] = useRecoilState(responsehistory);
@@ -21,12 +28,36 @@ export default function TestPage() {
   const [getsidebaraddress, setGetsidebaraddress] =
     useRecoilState(sidebaraddress);
   const [chatscreenloading, setChatscreenloading] = useState("");
+  const [isSidebarloading, setIssidebarloading] =
+    useRecoilState(sidebarloading);
 
   var tempchatid;
 
+  const sidebarlistcall = async () => {
+    setIssidebarloading(true);
+    const chatlistres = await axios.post("/api/fetchchatlist", {
+      user_id: "shalom",
+    });
+    if (chatlistres.status == 200) {
+      setIssidebarloading(false);
+      setChatlist(chatlistres.data.data);
+    } else {
+      console.log("can't retreive sidebar list");
+    }
+  };
+
+  const fecthProfile = async () => {
+    const profileData = await supabase.auth.getSession();
+    console.log(profileData);
+  };
+
+  useEffect(() => {
+    fecthProfile();
+    sidebarlistcall();
+  }, []);
+
   useEffect(() => {
     const getchathistory = async () => {
-      console.log("getting data", getsidebaraddress);
       const getchathistoryres = await axios.post("/api/fetchchathistorybyid", {
         chat_id: getsidebaraddress,
       });
@@ -43,20 +74,6 @@ export default function TestPage() {
       getchathistory();
     }
   }, [getsidebaraddress]);
-
-  useEffect(() => {
-    const sidelistcall = async () => {
-      const chatlistres = await axios.post("/api/fetchchatlist", {
-        user_id: "shalom",
-      });
-      if (chatlistres.status == 200) {
-        setChatlist(chatlistres.data.data);
-      } else {
-        console.log("can't retreive sidebar list");
-      }
-    };
-    sidelistcall();
-  }, []);
 
   useEffect(() => {
     const openaicall = async () => {
@@ -170,8 +187,10 @@ export default function TestPage() {
   ));
 
   return (
-    <>
-      <div className="flex-1 ">
+    <div className="flex">
+      <Sidebar />
+
+      <div className="flex-1 flex h-full flex-col w-full">
         <div className="sticky top-0 mb-1.5 flex items-center justify-between z-10 h-14 bg-white/95 p-2 font-semibold dark:bg-[#40414f]">
           <h1>
             <b>Chatgpt 3.5</b>
@@ -201,7 +220,7 @@ export default function TestPage() {
           </div>
         </div>
       </div>
-      <div className="fixed flex flex-row justify-center bottom-0 w-2/3 mx-9 py-5 px-5">
+      <div className="fixed flex flex-row justify-center bottom-0 w-2/3 mx-9 left-1/4 py-5 px-90">
         <textarea
           id="prompt-textarea"
           tabIndex="0"
@@ -223,6 +242,6 @@ export default function TestPage() {
           <Image src={sendicon} alt="sendicon" width={30} height={30} />
         </button>
       </div>
-    </>
+    </div>
   );
 }
